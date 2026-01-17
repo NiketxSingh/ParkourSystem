@@ -12,44 +12,25 @@ public class PlayerWalkState : PlayerBaseState
     {
         Move(ctx.walkSpeed);
 
-        if (Input.GetKey(KeyCode.LeftShift))
-            ctx.SwitchState(factory.Sprint());
+        if (ctx.sprintToggled && ctx.moveInput.magnitude > 0.1f)
+            {ctx.SwitchState(factory.Sprint()); return;}
 
         if (ctx.moveInput.magnitude < 0.1f)
             ctx.SwitchState(factory.Idle());
 
         if (Input.GetButtonDown("Jump") && !ctx.inParkourAction)
         {
-            if(DetectObstacleAndAdjust()) return;
+            if (ctx.TryStartParkour(false, ctx.walkSpeed, out _))
+                return;
             ctx.SwitchState(factory.JumpUp());
         }
+        ctx.TryStartParkour(true, ctx.walkSpeed, out _);
         if (Input.GetKeyDown(KeyCode.C))
         {
             ctx.SwitchState(factory.Crouch());
             return;
         }
-        if(!ctx.inParkourAction) DetectObstacleAndAdjust(true);
 
-    }
-    bool DetectObstacleAndAdjust(bool auto = false)
-    {
-        float extraOffset = auto ? 0 : ctx.walkSpeed * 0.1f;
-        var hit = ctx.environmentScanner.ObstacleCheck(auto ? 0f : extraOffset);
-
-        if (hit.forwardHitFound)
-        {
-            foreach(var action in ctx.parkourActions)
-            {
-                if(action.CheckIfPossible(hit, ctx.transform) && (auto ? action.AnimName == "StepUp" : true))
-                {
-                    ctx.currentParkourAction = action;
-                    Debug.Log("Executing Parkour Action: " + action.AnimName);
-                    ctx.SwitchState(factory.Parkour());
-                    return true;
-                }
-            }
-        }
-        return false;
     }
     void Move(float speed)
     {

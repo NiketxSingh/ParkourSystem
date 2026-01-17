@@ -14,6 +14,7 @@ public class ParkourActions : ScriptableObject
     [SerializeField] AvatarTarget matchBodyPart;
     [SerializeField] float matchStartTime;
     [SerializeField] float matchTargetTime;
+    [SerializeField] int priority;
     [SerializeField] Vector3 matchPosWeight = new Vector3(0,1,0);
     public Quaternion targetRotation{get; set;}
     public Vector3 MatchPos{get; set;}
@@ -28,6 +29,13 @@ public class ParkourActions : ScriptableObject
         {
             return false;
         }
+        Vector3 approachDir = player.forward;
+        Vector3 obstacleNormal = hitData.forwardHit.normal;
+
+        float angle = Vector3.Angle(approachDir, -obstacleNormal);
+
+        if (angle > 35f)
+            return false;
         if(rotateToObstacle)
         {
             targetRotation = Quaternion.LookRotation(hitData.forwardHit.normal * -1);
@@ -47,4 +55,5 @@ public class ParkourActions : ScriptableObject
     public float MatchTargetTime => matchTargetTime;
     public Vector3 MatchPosWeight => matchPosWeight;
     public string ObstacleTag => obstacleTag;
+    public int Priority => priority;
 }

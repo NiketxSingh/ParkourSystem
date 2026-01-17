@@ -12,11 +12,12 @@ public class EnvironmentScanner : MonoBehaviour
     public ObstacleHitData ObstacleCheck(float additionalForwardOffset = 0f)
     {
         var hitData =  new ObstacleHitData();
-        // forwardRayLength += additionalForwardOffset;
+        float UpdatedForwardRayLength = forwardRayLength + additionalForwardOffset;
+        // Debug.Log("Checking for obstacle with forward ray length: " + UpdatedForwardRayLength);
         Vector3 origin = transform.position + forwardRayOffset;
         hitData.forwardHitFound = Physics.Raycast(origin, transform.forward, out hitData.forwardHit,
-         forwardRayLength, obstacleLayer);
-        Debug.DrawRay(origin, transform.forward * forwardRayLength, hitData.forwardHitFound ? Color.red : Color.green);
+         UpdatedForwardRayLength, obstacleLayer);
+        Debug.DrawRay(origin, transform.forward * UpdatedForwardRayLength, hitData.forwardHitFound ? Color.red : Color.green);
         
         if(hitData.forwardHitFound)
         {

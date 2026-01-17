@@ -10,6 +10,7 @@ public class PlayerSlideState : PlayerBaseState
         ctx.animator.SetTrigger("Slide");
         ctx.controller.height = ctx.crouchHeight;
         ctx.controller.center = ctx.crouchCenter;
+        ctx.sprintToggled = false;
     }
 
     public override void UpdateState()
@@ -21,5 +22,8 @@ public class PlayerSlideState : PlayerBaseState
         //     ctx.SwitchState(factory.Idle());
     }
 
-    public override void ExitState() {}
+    public override void ExitState()
+    {
+        ctx.sprintToggled = true;
+    }
 }

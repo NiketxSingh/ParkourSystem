@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: RunningJumpUp
   m_EditorClassIdentifier: 
   animName: RunningJump
+  obstacleTag: 
   minHeight: 0.8
   maxHeight: 1.5
   rotateToObstacle: 1
@@ -20,4 +21,5 @@ MonoBehaviour:
   matchBodyPart: 3
   matchStartTime: 0.15
   matchTargetTime: 0.4
+  priority: 1
   matchPosWeight: {x: 1, y: 1, z: 1}

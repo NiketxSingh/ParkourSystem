@@ -21,4 +21,5 @@ MonoBehaviour:
   matchBodyPart: 4
   matchStartTime: 0.2
   matchTargetTime: 0.51
+  priority: 3
   matchPosWeight: {x: 1, y: 1, z: 1}

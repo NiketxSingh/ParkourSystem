@@ -4,7 +4,7 @@ public class PlayerParkourState : PlayerBaseState
 {
     EnvironmentScanner environmentScanner;
     Animator animator;
-
+    bool wasSprinting;
     Vector3 startPos;
     Vector3 endPos;
     public PlayerParkourState(PlayerStateMachine ctx, PlayerStateFactory factory)
@@ -17,6 +17,9 @@ public class PlayerParkourState : PlayerBaseState
         animator = ctx.GetComponent<Animator>();
         
         ctx.SetControl(false);
+        ctx.inParkourAction = true;
+        wasSprinting = ctx.sprintToggled;
+        ctx.sprintToggled = false;
         // animator.SetBool("inParkourAction", true);
         // animator.CrossFade(ctx.currentParkourAction.AnimName, 0.2f);
 
@@ -86,5 +89,7 @@ public class PlayerParkourState : PlayerBaseState
         // Debug.LogWarning("Exit Step Up State");
         ctx.useIK = false;
         ctx.SetControl(true);
+        ctx.inParkourAction = false;
+        ctx.sprintToggled = wasSprinting;
     }
 }

@@ -8,9 +8,14 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("Movement")]
     public float walkSpeed = 4f;
     public float sprintSpeed = 7f;
+    public bool sprintToggled = false;
+    public bool isGrounded;
     public float jumpForce = 7f;
     public float gravity = -20f;
     public float TurnVelocity = 0.1f;
+    public float groundDistance = 0.1f;
+    public Transform groundCheck;
+    public LayerMask gLayer;
 
     [Header("Crouch")]
     public float standHeight = 2f;
@@ -30,6 +35,16 @@ public class PlayerStateMachine : MonoBehaviour
     public bool useIK;
     public Vector3 leftHandIK;
     public Vector3 rightHandIK;
+    [Header("IK Runtime")]
+    public float ikWeight;
+    public float ikBlendSpeed = 8f;
+
+    [Header("Foot IK")]
+    public LayerMask groundLayer;
+    [Range(0f, 1f)]
+    public float footRayDistance;
+    public float footOffset = 0.08f;
+
 
 
     [Header("References")]
@@ -65,6 +80,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     void Update()
     {        
+        UpdateGroundStatus();
         currentState.UpdateState();
         if(!hasControl) return;
         ReadInput();
@@ -77,6 +93,10 @@ public class PlayerStateMachine : MonoBehaviour
     {
 
         moveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            sprintToggled = !sprintToggled;
+        }
         // Debug.Log("Move Input: " + moveInput);
     }
     public void SwitchState(PlayerBaseState newState)
@@ -85,15 +105,19 @@ public class PlayerStateMachine : MonoBehaviour
         currentState = newState;
         currentState.EnterState();
     }
-
+    void UpdateGroundStatus()
+    {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, gLayer);
+    }
     void ApplyGravity()
     {
         
-        if (controller.isGrounded && verticalVelocity < 0)
+        if (isGrounded && verticalVelocity < 0)
             verticalVelocity = -2f;
         else
             verticalVelocity += gravity * Time.deltaTime;
-        animator.SetBool("isGrounded", controller.isGrounded);
+        Debug.LogWarning("isGrounded: " + isGrounded);
+        animator.SetBool("isGrounded", isGrounded);
         animator.SetFloat("VerticalVelocity", verticalVelocity);
         velocity.y = verticalVelocity;
     }
@@ -110,6 +134,7 @@ public class PlayerStateMachine : MonoBehaviour
         controller.height = crouchHeight;
         controller.center = crouchCenter;
         IsCrouching = true;
+        sprintToggled = false;
         animator.SetBool("Crouching", true);
     }
 
@@ -117,21 +142,19 @@ public class PlayerStateMachine : MonoBehaviour
     {
         float checkHeight = standHeight - crouchHeight;
         Vector3 origin = transform.position + Vector3.up * crouchHeight;
-
-        return !Physics.SphereCast(
+        bool hitObstacle = Physics.Raycast(
             origin,
-            controller.radius,
             Vector3.up,
-            out _,
             checkHeight,
             obstacleLayer
         );
+        return !hitObstacle;
     }
 
     public void ExitCrouch()
     {
         if (!CanStandUp()) return;
-
+        
         controller.height = standHeight;
         controller.center = standCenter;
         IsCrouching = false;
@@ -169,24 +192,80 @@ public class PlayerStateMachine : MonoBehaviour
     }
     void OnAnimatorIK(int layerIndex)
     {
-        if (!useIK) return;
-        Debug.LogWarning("Applying IK");
-        animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
-        animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 1f);
-        animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
-        animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 1f);
+        Debug.Log("OnAnimatorIK called");
+        // -------- FOOT IK (Locomotion) --------
+        if (!inParkourAction && isGrounded)
+        {
+            animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
+            animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1f);
+            animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
+            animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 1f);
+            // Left Foot
+            RaycastHit hit;
+            
+            if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.LeftFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
+            {
+                Vector3 footPos = hit.point;
+                footPos.y += footRayDistance;
+                animator.SetIKPosition(AvatarIKGoal.LeftFoot, footPos);
+                animator.SetIKRotation(AvatarIKGoal.LeftFoot, Quaternion.LookRotation(transform.forward, hit.normal));
+            }
+            // Right Foot
+            if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.RightFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
+            {
+                Vector3 footPos = hit.point;
+                footPos.y += footRayDistance;
+                animator.SetIKPosition(AvatarIKGoal.RightFoot, footPos);
+                animator.SetIKRotation(AvatarIKGoal.RightFoot, Quaternion.LookRotation(transform.forward, hit.normal));
+            }
+        }
+    }
+    public bool TryStartParkour(
+    bool autoTrigger,
+    float speed,
+    out ParkourActions selectedAction)
+    {
+        selectedAction = null;
 
-        animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandIK);
-        animator.SetIKPosition(AvatarIKGoal.RightHand, rightHandIK);
+        // Must be moving forward
+        if (moveInput.y < 0.3f)
+            return false;
 
-        animator.SetIKRotation(
-            AvatarIKGoal.LeftHand,
-            Quaternion.LookRotation(transform.forward)
+        // Must have forward velocity
+        if (new Vector3(velocity.x, 0, velocity.z).magnitude < speed * 0.5f)
+            return false;
+
+        var hit = environmentScanner.ObstacleCheck(
+            autoTrigger ? 0f : speed * 0.4f
         );
-        animator.SetIKRotation(
-            AvatarIKGoal.RightHand,
-            Quaternion.LookRotation(transform.forward)
-        );
+
+        if (!hit.forwardHitFound)
+            return false;
+
+        float bestPriority = float.MinValue;
+
+        foreach (var action in parkourActions)
+        {
+            if (!action.CheckIfPossible(hit, transform))
+                continue;
+
+            // Auto-trigger rules (StepUp only)
+            if (autoTrigger && action.AnimName != "StepUp")
+                continue;
+
+            if (action.Priority > bestPriority)
+            {
+                bestPriority = action.Priority;
+                selectedAction = action;
+            }
+        }
+
+        if (selectedAction == null)
+            return false;
+
+        currentParkourAction = selectedAction;
+        SwitchState(states.Parkour());
+        return true;
     }
 
 }

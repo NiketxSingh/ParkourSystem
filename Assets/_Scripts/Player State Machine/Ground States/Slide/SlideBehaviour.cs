@@ -25,7 +25,7 @@ public class SlideBehaviour : StateMachineBehaviour
         if (psm != null)
         {
             // Debug.Log("Slide finished, switching to Idle state.");
-            psm.SwitchState(psm.states.Crouch());
+            psm.SwitchState(psm.states.Sprint());
         }
     }
 

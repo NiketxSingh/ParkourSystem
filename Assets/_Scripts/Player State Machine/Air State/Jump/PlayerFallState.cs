@@ -7,7 +7,7 @@ public class PlayerFallState : PlayerBaseState
 
     public override void UpdateState()
     {
-        if (ctx.controller.isGrounded)
+        if (ctx.isGrounded)
             ctx.SwitchState(factory.Land());
     }
 

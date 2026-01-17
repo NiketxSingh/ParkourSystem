@@ -11,24 +11,25 @@ public class PlayerSprintState : PlayerBaseState
     public override void UpdateState()
     {
 
-        if (!Input.GetKey(KeyCode.LeftShift) || ctx.moveInput.magnitude < 0.1f)
-            ctx.SwitchState(factory.Walk());
+        if (!ctx.sprintToggled || ctx.moveInput.magnitude < 0.1f)
+            {ctx.SwitchState(factory.Walk()); return;}
 
         if (Input.GetKeyDown(KeyCode.LeftControl))
             ctx.SwitchState(factory.Slide());
 
         if (Input.GetButtonDown("Jump") && !ctx.inParkourAction)
         {
-            if(DetectObstacleAndAdjust()) return;
+            if (ctx.TryStartParkour(false, ctx.sprintSpeed, out _))
+                return;
             ctx.SwitchState(factory.JumpUp());
         }
-    
+        ctx.TryStartParkour(true, ctx.sprintSpeed, out _);
         if (Input.GetKeyDown(KeyCode.C))
         {
             ctx.SwitchState(factory.Slide());
             return;
         }
-        if(!ctx.inParkourAction) DetectObstacleAndAdjust(true);
+        
         // move with sprint speed only when animation is playing
         if (ctx.animator.GetCurrentAnimatorStateInfo(0).IsName("Run"))
         {
@@ -38,26 +39,6 @@ public class PlayerSprintState : PlayerBaseState
         {
             Move(ctx.walkSpeed);
         }
-    }
-    bool DetectObstacleAndAdjust(bool auto = false)
-    {
-        float extraOffset = auto ? 0 : ctx.sprintSpeed * 0.1f;
-        var hit = ctx.environmentScanner.ObstacleCheck(auto ? 0f : extraOffset);
-
-        if (hit.forwardHitFound)
-        {
-            foreach(var action in ctx.parkourActions)
-            {
-                if(action.CheckIfPossible(hit, ctx.transform) && (auto ? action.AnimName == "StepUp" : true))
-                {
-                    ctx.currentParkourAction = action;
-                    Debug.Log("Executing Parkour Action: " + action.AnimName);
-                    ctx.SwitchState(factory.Parkour());
-                    return true;
-                }
-            }
-        }
-        return false;
     }
     void Move(float speed)
     {
