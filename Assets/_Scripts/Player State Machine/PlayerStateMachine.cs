@@ -116,7 +116,7 @@ public class PlayerStateMachine : MonoBehaviour
             verticalVelocity = -2f;
         else
             verticalVelocity += gravity * Time.deltaTime;
-        Debug.LogWarning("isGrounded: " + isGrounded);
+        // Debug.LogWarning("isGrounded: " + isGrounded);
         animator.SetBool("isGrounded", isGrounded);
         animator.SetFloat("VerticalVelocity", verticalVelocity);
         velocity.y = verticalVelocity;
@@ -190,36 +190,36 @@ public class PlayerStateMachine : MonoBehaviour
             action.MatchTargetTime
         );
     }
-    void OnAnimatorIK(int layerIndex)
-    {
-        Debug.Log("OnAnimatorIK called");
-        // -------- FOOT IK (Locomotion) --------
-        if (!inParkourAction && isGrounded)
-        {
-            animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
-            animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1f);
-            animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
-            animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 1f);
-            // Left Foot
-            RaycastHit hit;
+    // void OnAnimatorIK(int layerIndex)
+    // {
+    //     Debug.Log("OnAnimatorIK called");
+    //     // -------- FOOT IK (Locomotion) --------
+    //     if (!inParkourAction && isGrounded)
+    //     {
+    //         animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
+    //         animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1f);
+    //         animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
+    //         animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 1f);
+    //         // Left Foot
+    //         RaycastHit hit;
             
-            if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.LeftFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
-            {
-                Vector3 footPos = hit.point;
-                footPos.y += footRayDistance;
-                animator.SetIKPosition(AvatarIKGoal.LeftFoot, footPos);
-                animator.SetIKRotation(AvatarIKGoal.LeftFoot, Quaternion.LookRotation(transform.forward, hit.normal));
-            }
-            // Right Foot
-            if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.RightFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
-            {
-                Vector3 footPos = hit.point;
-                footPos.y += footRayDistance;
-                animator.SetIKPosition(AvatarIKGoal.RightFoot, footPos);
-                animator.SetIKRotation(AvatarIKGoal.RightFoot, Quaternion.LookRotation(transform.forward, hit.normal));
-            }
-        }
-    }
+    //         if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.LeftFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
+    //         {
+    //             Vector3 footPos = hit.point;
+    //             footPos.y += footRayDistance;
+    //             animator.SetIKPosition(AvatarIKGoal.LeftFoot, footPos);
+    //             animator.SetIKRotation(AvatarIKGoal.LeftFoot, Quaternion.LookRotation(transform.forward, hit.normal));
+    //         }
+    //         // Right Foot
+    //         if(Physics.Raycast(animator.GetIKPosition(AvatarIKGoal.RightFoot) + Vector3.up, Vector3.down, out hit, footRayDistance + 5f, groundLayer))
+    //         {
+    //             Vector3 footPos = hit.point;
+    //             footPos.y += footRayDistance;
+    //             animator.SetIKPosition(AvatarIKGoal.RightFoot, footPos);
+    //             animator.SetIKRotation(AvatarIKGoal.RightFoot, Quaternion.LookRotation(transform.forward, hit.normal));
+    //         }
+    //     }
+    // }
     public bool TryStartParkour(
     bool autoTrigger,
     float speed,

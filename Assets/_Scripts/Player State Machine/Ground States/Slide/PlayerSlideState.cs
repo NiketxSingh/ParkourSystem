@@ -16,7 +16,7 @@ public class PlayerSlideState : PlayerBaseState
     public override void UpdateState()
     {
         // timer -= UnityEngine.Time.deltaTime;
-        ctx.velocity = ctx.transform.forward * ctx.sprintSpeed * 1.2f;
+        ctx.velocity = ctx.transform.forward * ctx.sprintSpeed * 1.1f;
         // if(ctx.animator)
         // if (timer <= 0)
         //     ctx.SwitchState(factory.Idle());
