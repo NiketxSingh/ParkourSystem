@@ -17,4 +17,6 @@ public class PlayerStateFactory
 
     public PlayerBaseState Slide() => new PlayerSlideState(ctx, this);
     public PlayerBaseState Parkour() => new PlayerParkourState(ctx, this);
+
+    public PlayerCutsceneState Cutscene() => new PlayerCutsceneState(ctx, this);
 }
